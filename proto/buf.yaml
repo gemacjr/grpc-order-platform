@@ -4,6 +4,12 @@ modules:
 lint:
   use:
     - STANDARD
+  except:
+    # StreamOrderEvents streams the bare OrderEvent rather than a
+    # StreamOrderEventsResponse wrapper. Streaming a domain message directly is
+    # idiomatic gRPC; a single-field wrapper would add a nesting level to every
+    # streamed event for no semantic gain. This is the only exception taken.
+    - RPC_RESPONSE_STANDARD_NAME
 breaking:
   use:
     - FILE
