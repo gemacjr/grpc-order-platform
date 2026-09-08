@@ -39,11 +39,12 @@ bridge gRPC calls.
 | Decision | Choice | Rationale |
 |---|---|---|
 | Language / runtime | Java 21 (LTS) | Virtual threads for the blocking server path; pattern matching. |
-| Framework | Spring Boot 3.5.x | Mature Spring gRPC 1.0.x support; avoids speculative Boot 4 coordinates. |
-| gRPC integration | Spring gRPC (official) | First-party server/client autoconfiguration and Boot lifecycle integration. |
+| Framework | Spring Boot 4.0.8 | Verified against Maven Central: `spring-grpc-spring-boot-starter:1.0.3` declares `spring-boot-starter:4.0.2`, so Spring gRPC 1.0.x targets the Boot 4.0 line. An earlier draft of this spec said 3.5.x; that was wrong. |
+| gRPC integration | Spring gRPC 1.0.3 (official) | First-party server/client autoconfiguration and Boot lifecycle integration. Its BOM manages grpc 1.77.1, protobuf-java 4.33.4 and reactor-grpc 1.2.4, so those are not pinned independently. |
+| Resilience | `resilience4j-spring-boot4:2.4.0` | The Boot 4 variant; the `-spring-boot3` artifact is not used. |
 | Build | Gradle multi-module, Kotlin DSL, version catalog | Single-command build, one source of dependency truth. |
-| Reactive bridging | `reactor-grpc` codegen | Emits `Mono`/`Flux` stubs with request-n backpressure wired to gRPC flow control. Hand-rolled `StreamObserver` adapters are subtle and break under load. |
-| Persistence | Spring Data JDBC + Flyway | Explicit SQL semantics, no lazy-loading traps, predictable with virtual threads. |
+| Reactive bridging | `reactor-grpc` 1.2.4 codegen | Emits `Mono`/`Flux` stubs with request-n backpressure wired to gRPC flow control. Hand-rolled `StreamObserver` adapters are subtle and break under load. Managed by the Spring gRPC BOM, so it is a supported combination rather than a bolt-on. |
+| Persistence | Spring `JdbcClient` (`spring-boot-starter-jdbc`) + Flyway | Explicit SQL, no lazy-loading traps, predictable with virtual threads. Keyset pagination and the `insert ... returning` used for event sequences are awkward to express through a repository abstraction. |
 | Money | `int64` minor units | Never floating point. |
 | Pagination | Cursor `(created_at, id)` | Offset pagination silently corrupts under concurrent inserts. |
 
