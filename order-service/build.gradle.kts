@@ -4,14 +4,25 @@ plugins {
     alias(libs.plugins.spring.dependency.management)
 }
 
-dependencies {
-    implementation(platform(libs.spring.grpc.bom))
-    implementation("org.springframework.boot:spring-boot-starter")
+dependencyManagement {
+    imports {
+        mavenBom(libs.spring.grpc.bom.get().toString())
+        mavenBom(libs.testcontainers.bom.get().toString())
+    }
 }
 
-// TODO(task-3): remove once OrderServiceApplication exists. Task 3 replaces this
-// file wholesale; the replacement must NOT carry this over, or Task 18's
-// `:order-service:bootJar` silently produces no jar and the Docker build fails.
-tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
-    enabled = false
+dependencies {
+    implementation(project(":proto"))
+    implementation(libs.spring.grpc.server)
+    implementation(libs.grpc.services)
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-flyway")
+    runtimeOnly(libs.flyway.postgres)
+    runtimeOnly("org.postgresql:postgresql")
+
+    testImplementation(project(":testing-support"))
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation(libs.spring.grpc.test)
 }
