@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package order.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.example.order.proto";
+option java_multiple_files = true;
+option java_outer_classname = "OrderServiceProto";
+
+service OrderService {
+  rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+  rpc GetOrder(GetOrderRequest) returns (GetOrderResponse);
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse);
+  rpc StreamOrderEvents(StreamOrderEventsRequest) returns (stream OrderEvent);
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_PENDING = 1;
+  ORDER_STATUS_CONFIRMED = 2;
+  ORDER_STATUS_SHIPPED = 3;
+  ORDER_STATUS_CANCELLED = 4;
+}
+
+message OrderLine {
+  string sku = 1;
+  int32 quantity = 2;
+  int64 unit_price_minor = 3;
+}
+
+message Order {
+  string id = 1;
+  string customer_id = 2;
+  repeated OrderLine lines = 3;
+  int64 total_minor = 4;
+  string currency = 5;
+  OrderStatus status = 6;
+  int64 version = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message OrderEvent {
+  int64 sequence = 1;
+  string order_id = 2;
+  OrderStatus old_status = 3;
+  OrderStatus new_status = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+}
+
+message CreateOrderRequest {
+  string customer_id = 1;
+  repeated OrderLine lines = 2;
+  string currency = 3;
+  // Required. Makes CreateOrder safe to retry: a replay returns the original order.
+  string idempotency_key = 4;
+}
+message CreateOrderResponse {
+  Order order = 1;
+  // True when this response replayed an existing order rather than creating one.
+  bool idempotent_replay = 2;
+}
+
+message GetOrderRequest { string id = 1; }
+message GetOrderResponse { Order order = 1; }
+
+message ListOrdersRequest {
+  int32 page_size = 1;             // server-clamped: default 50, max 500
+  string page_token = 2;           // opaque; clients must not parse it
+  string customer_id = 3;          // optional filter
+  OrderStatus status = 4;          // optional filter; UNSPECIFIED means "any"
+}
+message ListOrdersResponse {
+  repeated Order orders = 1;
+  string next_page_token = 2;      // empty when exhausted
+}
+
+message UpdateOrderStatusRequest {
+  string id = 1;
+  OrderStatus new_status = 2;
+  // The version the caller last observed. A stale value is rejected with ABORTED,
+  // which is what makes this RPC safe to retry.
+  int64 expected_version = 3;
+}
+message UpdateOrderStatusResponse { Order order = 1; }
+
+message StreamOrderEventsRequest {
+  string customer_id = 1;          // optional filter
+  int64 from_sequence = 2;         // resume point; 0 means "from now"
+}
