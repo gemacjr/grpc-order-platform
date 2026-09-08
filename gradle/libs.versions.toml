@@ -1,0 +1,39 @@
+[versions]
+springBoot = "4.0.8"
+springGrpc = "1.0.3"
+protobufGradle = "0.9.6"
+resilience4j = "2.4.0"
+testcontainers = "1.21.4"
+logstash = "8.0"
+
+[libraries]
+spring-grpc-bom = { module = "org.springframework.grpc:spring-grpc-dependencies", version.ref = "springGrpc" }
+spring-grpc-server = { module = "org.springframework.grpc:spring-grpc-server-spring-boot-starter" }
+spring-grpc-client = { module = "org.springframework.grpc:spring-grpc-client-spring-boot-starter" }
+spring-grpc-test = { module = "org.springframework.grpc:spring-grpc-test" }
+
+grpc-stub = { module = "io.grpc:grpc-stub" }
+grpc-protobuf = { module = "io.grpc:grpc-protobuf" }
+grpc-services = { module = "io.grpc:grpc-services" }
+grpc-testing = { module = "io.grpc:grpc-testing" }
+grpc-inprocess = { module = "io.grpc:grpc-inprocess" }
+protobuf-java = { module = "com.google.protobuf:protobuf-java" }
+protobuf-java-util = { module = "com.google.protobuf:protobuf-java-util" }
+reactor-grpc-stub = { module = "com.salesforce.servicelibs:reactor-grpc-stub" }
+
+resilience4j = { module = "io.github.resilience4j:resilience4j-spring-boot4", version.ref = "resilience4j" }
+resilience4j-reactor = { module = "io.github.resilience4j:resilience4j-reactor", version.ref = "resilience4j" }
+
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-postgres = { module = "org.testcontainers:postgresql" }
+testcontainers-junit = { module = "org.testcontainers:junit-jupiter" }
+
+flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql" }
+micrometer-tracing-otel = { module = "io.micrometer:micrometer-tracing-bridge-otel" }
+otel-exporter-otlp = { module = "io.opentelemetry:opentelemetry-exporter-otlp" }
+logstash-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version = "1.1.7" }
+protobuf = { id = "com.google.protobuf", version.ref = "protobufGradle" }
