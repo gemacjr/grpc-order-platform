@@ -38,6 +38,7 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
 
     @Override
     public void createOrder(CreateOrderRequest request, StreamObserver<CreateOrderResponse> observer) {
+        DeadlineGuard.checkNotExpired();
         validator.validateCreate(request);
         var result = service.create(request.getCustomerId(),
                 OrderProtoMapper.toDomainLines(request.getLinesList()),
@@ -53,6 +54,7 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
 
     @Override
     public void getOrder(GetOrderRequest request, StreamObserver<GetOrderResponse> observer) {
+        DeadlineGuard.checkNotExpired();
         var id = validator.validateGet(request);
         observer.onNext(GetOrderResponse.newBuilder()
                 .setOrder(OrderProtoMapper.toProto(service.get(id))).build());
@@ -61,6 +63,7 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
 
     @Override
     public void listOrders(ListOrdersRequest request, StreamObserver<ListOrdersResponse> observer) {
+        DeadlineGuard.checkNotExpired();
         var cursor = validator.validateList(request);
         var page = service.list(
                 request.getCustomerId().isBlank() ? null : request.getCustomerId(),
@@ -78,6 +81,7 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
     @Override
     public void updateOrderStatus(UpdateOrderStatusRequest request,
                                   StreamObserver<UpdateOrderStatusResponse> observer) {
+        DeadlineGuard.checkNotExpired();
         var id = validator.validateUpdateStatus(request);
         var updated = service.updateStatus(id,
                 OrderProtoMapper.toDomain(request.getNewStatus()),
