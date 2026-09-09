@@ -1,6 +1,7 @@
 package com.example.order.api.web;
 
 import com.example.order.api.client.exception.*;
+import com.example.order.api.dto.UnknownOrderStatusException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,13 @@ public class ProblemDetailAdvice {
         detail.setProperty("errors", e.violations().stream()
                 .map(v -> Map.of("field", v.field(), "message", v.description()))
                 .toList());
+        return detail;
+    }
+
+    @ExceptionHandler(UnknownOrderStatusException.class)
+    public ProblemDetail unknownStatus(UnknownOrderStatusException e) {
+        var detail = problem(HttpStatus.BAD_REQUEST, "Invalid request", e.getMessage(), "validation");
+        detail.setProperty("errors", List.of(Map.of("field", e.field(), "message", e.getMessage())));
         return detail;
     }
 

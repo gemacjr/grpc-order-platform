@@ -48,13 +48,23 @@ public final class DtoMapper {
     }
 
     public static OrderStatus fromShortName(String name) {
+        return fromShortName(name, "status");
+    }
+
+    /**
+     * UNRECOGNIZED is a value you can RECEIVE, never one you can SEND: the generated protobuf
+     * setters call {@code getNumber()} internally, and {@code UNRECOGNIZED.getNumber()} throws
+     * synchronously, before any Mono is assembled — onErrorMap never runs. So an unmatched name
+     * must fail fast here, as a local validation error, rather than becoming UNRECOGNIZED.
+     */
+    public static OrderStatus fromShortName(String name, String fieldName) {
         if (name == null || name.isBlank()) {
             return OrderStatus.ORDER_STATUS_UNSPECIFIED;
         }
         try {
             return OrderStatus.valueOf("ORDER_STATUS_" + name.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return OrderStatus.UNRECOGNIZED;
+            throw new UnknownOrderStatusException(fieldName, name);
         }
     }
 

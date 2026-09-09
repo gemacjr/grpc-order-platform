@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @WebFluxTest(controllers = {OrderController.class, OrderEventSseController.class})
@@ -114,6 +115,26 @@ class OrderControllerTest {
                 .jsonPath("$.errorId").isEqualTo("err-42")
                 .jsonPath("$.detail").value(d -> org.assertj.core.api.Assertions
                         .assertThat((String) d).doesNotContain("boom"));
+    }
+
+    @Test
+    void unknownStatusFilterReturns400NotServerError() {
+        web.get().uri("/api/v1/orders?status=bogus").exchange()
+                .expectStatus().isBadRequest()
+                .expectBody().jsonPath("$.errors[0].field").isEqualTo("status");
+
+        verifyNoInteractions(client);
+    }
+
+    @Test
+    void unknownStatusInPatchBodyReturns400() {
+        web.patch().uri("/api/v1/orders/" + UUID.randomUUID() + "/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {"status":"bogus","expectedVersion":1}
+                        """)
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 
     @Test
