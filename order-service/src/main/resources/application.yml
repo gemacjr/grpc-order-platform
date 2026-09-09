@@ -25,6 +25,13 @@ spring:
 server:
   shutdown: graceful
 
+order:
+  shutdown:
+    # Time to let load balancers observe NOT_SERVING before the gRPC server
+    # drains. Overridden to 0s in tests so the suite isn't taxed on every
+    # Spring context teardown.
+    pre-drain-wait: 2s
+
 management:
   server:
     port: 9090

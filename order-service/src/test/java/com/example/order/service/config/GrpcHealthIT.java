@@ -17,6 +17,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -35,18 +37,41 @@ class GrpcHealthIT {
 
     @Autowired ManagedChannel channel;
 
+    /**
+     * gRPC health now tracks Spring Boot's readiness state (flipped to SERVING
+     * only once ACCEPTING_TRAFFIC is published) instead of a hardcoded constant.
+     * By the time a @SpringBootTest method runs the context is already fully
+     * refreshed and readiness should already be SERVING, but poll with a bounded
+     * wait rather than asserting on the first response, in case the readiness
+     * event is still being dispatched to listeners.
+     */
+    private HealthCheckResponse.ServingStatus awaitStatus(String service) {
+        var stub = HealthGrpc.newBlockingStub(channel);
+        var deadline = Instant.now().plus(Duration.ofSeconds(5));
+        HealthCheckResponse.ServingStatus last = null;
+        while (Instant.now().isBefore(deadline)) {
+            last = stub.check(HealthCheckRequest.newBuilder().setService(service).build()).getStatus();
+            if (last == HealthCheckResponse.ServingStatus.SERVING) {
+                return last;
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        return last;
+    }
+
     @Test
     void healthServiceReportsServing() {
-        var response = HealthGrpc.newBlockingStub(channel)
-                .check(HealthCheckRequest.newBuilder().setService("").build());
-        assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.ServingStatus.SERVING);
+        assertThat(awaitStatus("")).isEqualTo(HealthCheckResponse.ServingStatus.SERVING);
     }
 
     @Test
     void perServiceHealthIsReported() {
-        var response = HealthGrpc.newBlockingStub(channel)
-                .check(HealthCheckRequest.newBuilder().setService("order.v1.OrderService").build());
-        assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.ServingStatus.SERVING);
+        assertThat(awaitStatus("order.v1.OrderService")).isEqualTo(HealthCheckResponse.ServingStatus.SERVING);
     }
 
     @Test

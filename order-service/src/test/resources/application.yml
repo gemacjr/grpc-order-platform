@@ -1,0 +1,5 @@
+order:
+  shutdown:
+    # No production load balancer is watching a test context tear down - skip
+    # the pre-drain wait entirely so every @SpringBootTest teardown is instant.
+    pre-drain-wait: 0s
