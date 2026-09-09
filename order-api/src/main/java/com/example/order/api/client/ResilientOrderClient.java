@@ -3,6 +3,7 @@ package com.example.order.api.client;
 import com.example.order.api.client.exception.RemoteUnavailable;
 import com.example.order.proto.*;
 import io.github.resilience4j.bulkhead.Bulkhead;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.reactor.bulkhead.operator.BulkheadOperator;
@@ -70,6 +71,10 @@ public class ResilientOrderClient {
                 // A rejected call is indistinguishable from an unreachable backend
                 // as far as the caller is concerned, so it maps to the same 503.
                 .onErrorMap(CallNotPermittedException.class,
-                        e -> new RemoteUnavailable("Order service circuit is open", e));
+                        e -> new RemoteUnavailable("Order service circuit is open", e))
+                // Bulkhead-full means "shed load, retry shortly" - exactly the same
+                // contract as an open circuit, so it gets the same 503 treatment.
+                .onErrorMap(BulkheadFullException.class,
+                        e -> new RemoteUnavailable("Order service bulkhead is full", e));
     }
 }

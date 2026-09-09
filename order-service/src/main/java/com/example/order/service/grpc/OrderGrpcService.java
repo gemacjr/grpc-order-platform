@@ -95,7 +95,13 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
     @Override
     public void streamOrderEvents(StreamOrderEventsRequest request, StreamObserver<OrderEvent> observer) {
         String customerId = request.getCustomerId().isBlank() ? null : request.getCustomerId();
-        long cursor = Math.max(0L, request.getFromSequence() - 1);
+        // Per the proto contract, 0 means "from now": start after whatever is
+        // currently the newest event, so a fresh subscriber gets only new events
+        // instead of replaying the entire history. A caller who wants history asks
+        // for it explicitly with from_sequence > 0 (replayed inclusively from there).
+        long cursor = request.getFromSequence() <= 0
+                ? service.maxEventSequence()
+                : request.getFromSequence() - 1;
 
         var serverObserver = (io.grpc.stub.ServerCallStreamObserver<OrderEvent>) observer;
         var context = io.grpc.Context.current();

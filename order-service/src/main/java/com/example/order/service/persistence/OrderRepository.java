@@ -146,6 +146,18 @@ public class OrderRepository {
                 .single();
     }
 
+    /**
+     * Current high-water mark of order_events.sequence, or 0 if the table is empty.
+     * A simple indexed max() - O(log n) via the primary key/sequence index, not a
+     * full table scan - deliberately NOT the old O(n) "load everything and take the
+     * max in memory" approach.
+     */
+    public long maxSequence() {
+        return jdbc.sql("select coalesce(max(sequence), 0) from order_events")
+                .query(Long.class)
+                .single();
+    }
+
     public List<OrderEvent> eventsAfter(long sequence, String customerId, int limit) {
         var sql = new StringBuilder("""
                 select e.* from order_events e

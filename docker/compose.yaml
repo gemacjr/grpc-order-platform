@@ -54,8 +54,9 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
     healthcheck:
-      # A native gRPC probe, not a TCP check: an open port proves nothing about
-      # whether the service can actually serve.
+      # An HTTP readiness probe via wget, not a bare TCP check: an open port
+      # proves nothing about whether the service can actually serve. (The
+      # native gRPC health probe is used in the k8s manifests, not here.)
       test: ["CMD", "wget", "-qO-", "http://localhost:9090/actuator/health/readiness"]
       interval: 10s
       timeout: 3s
@@ -73,6 +74,7 @@ services:
     # reachable from the containers), uncomment:
     # environment:
     #   ORDER_SECURITY_ENABLED: "true"
+    #   ORDER_SECURITY_JWK_SET_URI: https://your-idp.example.com/.well-known/jwks.json
     #   ORDER_SECURITY_ISSUER: https://your-idp.example.com
     #   ORDER_SECURITY_AUDIENCE: order-api
 
@@ -104,5 +106,6 @@ services:
     # above; both services must agree):
     # environment:
     #   ORDER_SECURITY_ENABLED: "true"
+    #   ORDER_SECURITY_JWK_SET_URI: https://your-idp.example.com/.well-known/jwks.json
     #   ORDER_SECURITY_ISSUER: https://your-idp.example.com
     #   ORDER_SECURITY_AUDIENCE: order-api

@@ -139,12 +139,14 @@ whether transport security is on.
 **To enable JWT:**
 
 Uncomment the security environment blocks in `docker/compose.yaml` for both
-services (`ORDER_SECURITY_ENABLED=true`, `ORDER_SECURITY_ISSUER`,
-`ORDER_SECURITY_AUDIENCE`) — this requires a real IdP/JWKS endpoint reachable
-from the containers. Both services must agree: `order-api` validates the
-bearer token at the REST edge and forwards it as gRPC `authorization`
-metadata; `order-service` independently re-validates it in a server
-interceptor rather than trusting the edge.
+services (`ORDER_SECURITY_ENABLED=true`, `ORDER_SECURITY_JWK_SET_URI`,
+`ORDER_SECURITY_ISSUER`, `ORDER_SECURITY_AUDIENCE`) — this requires a real
+IdP/JWKS endpoint reachable from the containers. `ORDER_SECURITY_JWK_SET_URI`
+is required whenever security is enabled: both services fail fast at startup
+with a clear `IllegalStateException` if it is left unset. Both services must
+agree: `order-api` validates the bearer token at the REST edge and forwards
+it as gRPC `authorization` metadata; `order-service` independently
+re-validates it in a server interceptor rather than trusting the edge.
 
 ## Verified behaviours
 

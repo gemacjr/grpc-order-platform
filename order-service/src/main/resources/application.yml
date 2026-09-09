@@ -75,6 +75,10 @@ order:
     # certificates. The gRPC service still re-validates any token it does see;
     # this flag only controls whether validation is enforced at all.
     enabled: ${ORDER_SECURITY_ENABLED:false}
+    # No default: required when security is enabled. Left blank here so that
+    # turning security on without also setting this fails fast with a clear
+    # startup error instead of an opaque placeholder-resolution failure.
+    jwk-set-uri: ${ORDER_SECURITY_JWK_SET_URI:}
     # Expected `iss`/`aud` claims. Defaults match JwtTestTokens so the test suite
     # keeps passing unchanged; override for real deployments.
     issuer: ${ORDER_SECURITY_ISSUER:https://dev.example.com}

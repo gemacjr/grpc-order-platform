@@ -88,5 +88,8 @@ message UpdateOrderStatusResponse { Order order = 1; }
 
 message StreamOrderEventsRequest {
   string customer_id = 1;          // optional filter
-  int64 from_sequence = 2;         // resume point; 0 means "from now"
+  // Resume point. 0 means "from now": only events that occur after this call
+  // is received are streamed, with no replay of existing history. A value > 0
+  // replays inclusively from that sequence number onward.
+  int64 from_sequence = 2;
 }

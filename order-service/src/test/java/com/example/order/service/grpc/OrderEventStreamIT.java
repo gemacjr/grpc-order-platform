@@ -50,6 +50,35 @@ class OrderEventStreamIT {
     }
 
     @Test
+    void fromSequenceZeroDoesNotReplayPreExistingEventsButOneDoes() {
+        String customer = "from-now-" + UUID.randomUUID();
+        var created = stub.createOrder(CreateOrderRequest.newBuilder()
+                .setCustomerId(customer).setCurrency("USD")
+                .setIdempotencyKey(UUID.randomUUID().toString())
+                .addLines(OrderLine.newBuilder().setSku("S").setQuantity(1).setUnitPriceMinor(100).build())
+                .build()).getOrder();
+
+        // Pre-existing event, written before either stream subscribes.
+        stub.updateOrderStatus(UpdateOrderStatusRequest.newBuilder()
+                .setId(created.getId()).setNewStatus(OrderStatus.ORDER_STATUS_CONFIRMED)
+                .setExpectedVersion(created.getVersion()).build());
+
+        // from_sequence = 0 means "from now": the pre-existing CONFIRMED event must
+        // not be replayed, so the stream sees nothing before its deadline expires.
+        var fromNow = stub.withDeadlineAfter(2, TimeUnit.SECONDS)
+                .streamOrderEvents(StreamOrderEventsRequest.newBuilder()
+                        .setCustomerId(customer).setFromSequence(0).build());
+        assertThat(fromNow.hasNext()).isFalse();
+
+        // from_sequence = 1 replays inclusively from sequence 1, so the same
+        // pre-existing event IS delivered.
+        var fromStart = stub.withDeadlineAfter(5, TimeUnit.SECONDS)
+                .streamOrderEvents(StreamOrderEventsRequest.newBuilder()
+                        .setCustomerId(customer).setFromSequence(1).build());
+        assertThat(fromStart.next().getNewStatus()).isEqualTo(OrderStatus.ORDER_STATUS_CONFIRMED);
+    }
+
+    @Test
     void streamEndsWhenTheDeadlineExpiresRatherThanHangingForever() {
         String customer = "quiet-" + UUID.randomUUID();
         long start = System.nanoTime();

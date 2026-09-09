@@ -89,6 +89,26 @@ public class GrpcExceptionInterceptor implements ServerInterceptor {
                             "expectedVersion", String.valueOf(conflict.expectedVersion()),
                             "actualVersion", String.valueOf(conflict.actualVersion()))));
         }
+        // A library (or DeadlineGuard) already chose a status - e.g. DEADLINE_EXCEEDED
+        // when shedding an expired call. Pass it through unchanged: generating a fresh
+        // errorId and logging at ERROR here would launder a well-formed status into
+        // INTERNAL and flood the logs precisely when the system is overloaded.
+        if (e instanceof StatusRuntimeException sre) {
+            log.debug("Passing through gRPC status {}", sre.getStatus().getCode(), e);
+            return com.google.rpc.Status.newBuilder()
+                    .setCode(sre.getStatus().getCode().value())
+                    .setMessage(sre.getStatus().getDescription() == null
+                            ? sre.getStatus().getCode().name() : sre.getStatus().getDescription())
+                    .build();
+        }
+        if (e instanceof StatusException se) {
+            log.debug("Passing through gRPC status {}", se.getStatus().getCode(), e);
+            return com.google.rpc.Status.newBuilder()
+                    .setCode(se.getStatus().getCode().value())
+                    .setMessage(se.getStatus().getDescription() == null
+                            ? se.getStatus().getCode().name() : se.getStatus().getDescription())
+                    .build();
+        }
 
         // Unexpected: log everything, return an opaque id. Internal detail must not
         // reach the caller, but support needs a handle to correlate against the logs.

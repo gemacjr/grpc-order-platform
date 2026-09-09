@@ -48,9 +48,15 @@ public class SecurityConfig {
     @Bean
     @ConditionalOnProperty(name = "order.security.enabled", havingValue = "true")
     public JwtDecoder jwtDecoder(
-            @Value("${order.security.jwk-set-uri}") String jwkSetUri,
+            @Value("${order.security.jwk-set-uri:}") String jwkSetUri,
             @Value("${order.security.issuer:https://dev.example.com}") String expectedIssuer,
             @Value("${order.security.audience:order-api}") String expectedAudience) {
+        if (jwkSetUri == null || jwkSetUri.isBlank()) {
+            throw new IllegalStateException(
+                    "order.security.enabled=true but order.security.jwk-set-uri is not set. "
+                            + "Set the ORDER_SECURITY_JWK_SET_URI environment variable (or the "
+                            + "order.security.jwk-set-uri property) to a reachable JWKS endpoint.");
+        }
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
         OAuth2TokenValidator<Jwt> withIssuerAndAudience = new DelegatingOAuth2TokenValidator<>(
                 JwtValidators.createDefault(),

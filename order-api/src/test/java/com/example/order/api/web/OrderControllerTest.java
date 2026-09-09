@@ -62,6 +62,21 @@ class OrderControllerTest {
     }
 
     @Test
+    void localBeanValidationFailureBecomes400ProblemDetail() {
+        // No mocking of `client` needed: @Valid rejects this before the controller
+        // method - and therefore the client - is ever invoked.
+        web.post().uri("/api/v1/orders").contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {"customerId":"","currency":"USD","idempotencyKey":"k1","lines":[]}
+                        """)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON);
+
+        verifyNoInteractions(client);
+    }
+
+    @Test
     void notFoundBecomes404ProblemDetail() {
         when(client.get(any())).thenReturn(Mono.error(new RemoteOrderNotFound("gone")));
 

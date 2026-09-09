@@ -64,6 +64,12 @@ class GrpcStatusTranslatorTest {
     }
 
     @Test
+    void resourceExhaustedIsShedAndRetryLikeUnavailable() {
+        assertThat(GrpcStatusTranslator.translate(Status.RESOURCE_EXHAUSTED.asRuntimeException()))
+                .isInstanceOf(RemoteUnavailable.class);
+    }
+
+    @Test
     void nonGrpcThrowablesPassThroughUnchanged() {
         var original = new IllegalStateException("local");
         assertThat(GrpcStatusTranslator.translate(original)).isSameAs(original);

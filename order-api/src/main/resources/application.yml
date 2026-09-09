@@ -2,6 +2,15 @@ spring:
   application:
     name: order-api
 
+  webflux:
+    problemdetails:
+      # Without this, LOCAL failures (@Valid violations, a malformed UUID path
+      # variable, bad JSON) fall back to Boot's plain {timestamp,path,status,error}
+      # JSON body instead of RFC 9457 application/problem+json - a different error
+      # contract from the one ProblemDetailAdvice already produces for REMOTE
+      # failures. Enabling this gives both paths the same contract at the edge.
+      enabled: true
+
   # Boot's SslMeterBinder eagerly reads every registered SSL bundle's
   # certificate files at startup to report expiry metrics - regardless of
   # spring.grpc.client.channels.*.ssl.enabled - so simply defining the
@@ -55,6 +64,10 @@ order:
     # compose stack turns it on explicitly. See order-service's flag of the same
     # name - the gRPC service re-validates independently either way.
     enabled: ${ORDER_SECURITY_ENABLED:false}
+    # No default: required when security is enabled. Left blank here so that
+    # turning security on without also setting this fails fast with a clear
+    # startup error instead of an opaque placeholder-resolution failure.
+    jwk-set-uri: ${ORDER_SECURITY_JWK_SET_URI:}
     # Expected `iss`/`aud` claims. Defaults match JwtTestTokens so the test suite
     # keeps passing unchanged; override for real deployments.
     issuer: ${ORDER_SECURITY_ISSUER:https://dev.example.com}

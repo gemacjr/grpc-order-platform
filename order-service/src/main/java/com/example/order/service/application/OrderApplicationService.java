@@ -92,4 +92,9 @@ public class OrderApplicationService {
     public List<OrderEvent> eventsAfter(long sequence, String customerId, int limit) {
         return repository.eventsAfter(sequence, customerId, limit);
     }
+
+    @Transactional(readOnly = true)
+    public long maxEventSequence() {
+        return repository.maxSequence();
+    }
 }

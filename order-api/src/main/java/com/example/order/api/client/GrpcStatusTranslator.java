@@ -29,7 +29,13 @@ public final class GrpcStatusTranslator {
             case FAILED_PRECONDITION -> new RemoteIllegalTransition(message);
             case ABORTED -> new RemoteVersionConflict(message);
             case UNAVAILABLE -> new RemoteUnavailable(message, sre);
+            // Shed-and-retry, same as UNAVAILABLE - and already in the retryable
+            // status codes in RetryPolicyConfig, so the two must agree.
+            case RESOURCE_EXHAUSTED -> new RemoteUnavailable(message, sre);
             case DEADLINE_EXCEEDED -> new RemoteTimeout(message, sre);
+            // CANCELLED is deliberately left to fall through to RemoteInternal below:
+            // it means the caller (us) cancelled the call, so no response is ever
+            // being delivered - there is no better client-facing status to give it.
             case UNAUTHENTICATED -> new RemoteUnauthenticated(message);
             case PERMISSION_DENIED -> new RemotePermissionDenied(message);
             default -> new RemoteInternal(message, errorId(rpcStatus), sre);
