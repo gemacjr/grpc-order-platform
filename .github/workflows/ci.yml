@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push: { branches: [main] }
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # buf breaking needs history to compare against main
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build and test
+        run: ./gradlew build --no-daemon
+
+      - uses: bufbuild/buf-setup-action@v1
+      - name: Lint protos
+        run: buf lint
+        working-directory: proto
+      - name: Detect breaking proto changes
+        if: github.event_name == 'pull_request'
+        run: buf breaking --against "https://github.com/${{ github.repository }}.git#branch=main,subdir=proto"
+        working-directory: proto
+
+      - name: Build images
+        run: |
+          docker build -f docker/Dockerfile.service -t order-service:ci .
+          docker build -f docker/Dockerfile.api -t order-api:ci .
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/**'
