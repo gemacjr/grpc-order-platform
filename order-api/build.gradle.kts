@@ -16,9 +16,11 @@ dependencies {
     implementation(libs.spring.grpc.client)
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.google.api.grpc:proto-google-common-protos")
 
     testImplementation(project(":testing-support"))
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-webflux-test")
     testImplementation("io.projectreactor:reactor-test")
 }
