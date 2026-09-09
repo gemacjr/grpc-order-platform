@@ -18,6 +18,12 @@ dependencies {
     implementation("org.springframework.security:spring-security-oauth2-jose")
     implementation("com.google.api.grpc:proto-google-common-protos")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    // WebFlux, not starter-web: this service needs an HTTP listener ONLY to host
+    // actuator (health/prometheus). order-api is reactive, and EndToEndIT boots both
+    // applications in one context - a servlet starter there makes Boot choose SERVLET
+    // as the web application type, which breaks the reactive WebTestClient wiring.
+    // Reactive on both sides keeps the combined context unambiguous.
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-flyway")

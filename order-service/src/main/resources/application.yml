@@ -1,6 +1,15 @@
 spring:
   application:
     name: order-service
+  # Boot's SslMeterBinder eagerly reads every registered SSL bundle's
+  # certificate files at startup to report expiry metrics - regardless of
+  # spring.grpc.server.ssl.enabled - so simply defining the grpc-server PEM
+  # bundle above makes cert files mandatory even when TLS is off. Excluded so
+  # the bundle definition stays genuinely inert (no files on disk required)
+  # until TLS is actually turned on.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.micrometer.metrics.autoconfigure.ssl.SslMetricsAutoConfiguration
   lifecycle:
     timeout-per-shutdown-phase: 30s
   threads:
@@ -42,6 +51,17 @@ spring:
         bundle: grpc-server
 
 server:
+  # This is a gRPC-only service - the "data" port is grpc.server.port (9443)
+  # above, not this one. Boot's actuator cannot serve HTTP endpoints
+  # (health/prometheus/metrics) without a web-server starter, so
+  # spring-boot-starter-web is pulled in purely to host actuator on a single
+  # HTTP listener. That listener is bound here, on server.port, deliberately
+  # instead of via management.server.port: if a *separate* management port
+  # were configured, Boot would ALSO stand up a full main application server
+  # on the default port 8080 that this service has no use for and never
+  # wanted exposed. Keeping actuator on the one HTTP port (server.port) means
+  # there is exactly one HTTP listener, serving only actuator endpoints.
+  port: 9090
   shutdown: graceful
 
 order:
@@ -61,8 +81,6 @@ order:
     audience: ${ORDER_SECURITY_AUDIENCE:order-api}
 
 management:
-  server:
-    port: 9090
   endpoints:
     web:
       exposure:
@@ -78,9 +96,16 @@ management:
   tracing:
     sampling:
       probability: ${TRACE_SAMPLE_RATE:1.0}
-  otlp:
+  opentelemetry:
     tracing:
-      endpoint: ${OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+      export:
+        otlp:
+          # Boot 4 renamed this namespace. The Boot 3 key
+          # `management.otlp.tracing.endpoint` binds to NOTHING here: Boot ignores
+          # unknown keys silently, so the app starts clean and simply exports no
+          # spans. Verified against spring-boot-micrometer-tracing-opentelemetry
+          # 4.0.8 configuration metadata.
+          endpoint: ${OTLP_ENDPOINT:http://localhost:4318/v1/traces}
   observations:
     key-values:
       service: ${spring.application.name}

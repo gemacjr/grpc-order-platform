@@ -1,0 +1,21 @@
+# syntax=docker/dockerfile:1
+#
+# Build stage uses eclipse-temurin:21-jdk rather than the brief's gradle:8-jdk21:
+# the build runs ./gradlew, which downloads and uses the project's own Gradle
+# wrapper (9.6.0) regardless of what Gradle ships in the base image, so the
+# gradle:8 image's bundled Gradle is never invoked. Using the same Temurin JDK
+# family as the runtime stage avoids pulling an extra, unrelated base image.
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /src
+COPY . .
+RUN ./gradlew :order-service:bootJar --no-daemon
+
+FROM eclipse-temurin:21-jre-alpine
+RUN addgroup -S app && adduser -S app -G app
+WORKDIR /app
+COPY --from=build /src/order-service/build/libs/*.jar app.jar
+USER app
+EXPOSE 9443 9090
+# Container-aware heap sizing; a fixed -Xmx ignores the cgroup limit.
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]

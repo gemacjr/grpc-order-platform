@@ -1,0 +1,6 @@
+apiVersion: 1
+providers:
+  - name: order-platform
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards

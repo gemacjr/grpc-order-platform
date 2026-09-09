@@ -2,6 +2,16 @@ spring:
   application:
     name: order-api
 
+  # Boot's SslMeterBinder eagerly reads every registered SSL bundle's
+  # certificate files at startup to report expiry metrics - regardless of
+  # spring.grpc.client.channels.*.ssl.enabled - so simply defining the
+  # grpc-client PEM bundle below makes cert files mandatory even when TLS is
+  # off. Excluded so the bundle definition stays genuinely inert (no files on
+  # disk required) until TLS is actually turned on.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.micrometer.metrics.autoconfigure.ssl.SslMetricsAutoConfiguration
+
   # Truststore for verifying the gRPC server's certificate. Resolved lazily by
   # Spring Boot's SSL bundle registry only when the bundle is actually requested
   # (i.e. when spring.grpc.client.channels.order-service.ssl.enabled is true), so
@@ -67,9 +77,16 @@ management:
   tracing:
     sampling:
       probability: ${TRACE_SAMPLE_RATE:1.0}
-  otlp:
+  opentelemetry:
     tracing:
-      endpoint: ${OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+      export:
+        otlp:
+          # Boot 4 renamed this namespace. The Boot 3 key
+          # `management.otlp.tracing.endpoint` binds to NOTHING here: Boot ignores
+          # unknown keys silently, so the app starts clean and simply exports no
+          # spans. Verified against spring-boot-micrometer-tracing-opentelemetry
+          # 4.0.8 configuration metadata.
+          endpoint: ${OTLP_ENDPOINT:http://localhost:4318/v1/traces}
   observations:
     key-values:
       service: ${spring.application.name}

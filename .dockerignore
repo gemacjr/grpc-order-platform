@@ -1,0 +1,7 @@
+.git
+.gradle
+.superpowers
+certs
+**/build/
+**/.gradle/
+*.md
