@@ -7,9 +7,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+
+import java.util.List;
 
 /**
  * Security defaults to OFF ({@code order.security.enabled=false}) so tests and local
@@ -38,8 +47,18 @@ public class SecurityConfig {
 
     @Bean
     @ConditionalOnProperty(name = "order.security.enabled", havingValue = "true")
-    public JwtDecoder jwtDecoder(@Value("${order.security.jwk-set-uri}") String jwkSetUri) {
-        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+    public JwtDecoder jwtDecoder(
+            @Value("${order.security.jwk-set-uri}") String jwkSetUri,
+            @Value("${order.security.issuer:https://dev.example.com}") String expectedIssuer,
+            @Value("${order.security.audience:order-api}") String expectedAudience) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+        OAuth2TokenValidator<Jwt> withIssuerAndAudience = new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefault(),
+                new JwtIssuerValidator(expectedIssuer),
+                new JwtClaimValidator<List<String>>(JwtClaimNames.AUD,
+                        aud -> aud != null && aud.contains(expectedAudience)));
+        decoder.setJwtValidator(withIssuerAndAudience);
+        return decoder;
     }
 
     // order.security.enabled=false (the default): no authentication is enforced, so

@@ -46,11 +46,15 @@ public final class JwtTestTokens {
     }
 
     public static String signedToken(String subject, List<String> scopes) {
+        return signedToken(subject, scopes, "https://dev.example.com", "order-api");
+    }
+
+    public static String signedToken(String subject, List<String> scopes, String issuer, String audience) {
         try {
             var claims = new JWTClaimsSet.Builder()
                     .subject(subject)
-                    .issuer("https://dev.example.com")
-                    .audience("order-api")
+                    .issuer(issuer)
+                    .audience(audience)
                     .claim("scope", String.join(" ", scopes))
                     .issueTime(Date.from(Instant.now()))
                     .expirationTime(Date.from(Instant.now().plusSeconds(600)))

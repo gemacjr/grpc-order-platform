@@ -45,6 +45,10 @@ order:
     # compose stack turns it on explicitly. See order-service's flag of the same
     # name - the gRPC service re-validates independently either way.
     enabled: ${ORDER_SECURITY_ENABLED:false}
+    # Expected `iss`/`aud` claims. Defaults match JwtTestTokens so the test suite
+    # keeps passing unchanged; override for real deployments.
+    issuer: ${ORDER_SECURITY_ISSUER:https://dev.example.com}
+    audience: ${ORDER_SECURITY_AUDIENCE:order-api}
 
 management:
   server:

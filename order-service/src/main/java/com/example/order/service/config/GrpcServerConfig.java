@@ -9,8 +9,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.grpc.server.GlobalServerInterceptor;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+
+import java.util.List;
 
 @Configuration
 public class GrpcServerConfig {
@@ -35,7 +44,17 @@ public class GrpcServerConfig {
 
     @Bean
     @ConditionalOnProperty(name = "order.security.enabled", havingValue = "true")
-    public JwtDecoder jwtDecoder(@Value("${order.security.jwk-set-uri}") String jwkSetUri) {
-        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+    public JwtDecoder jwtDecoder(
+            @Value("${order.security.jwk-set-uri}") String jwkSetUri,
+            @Value("${order.security.issuer:https://dev.example.com}") String expectedIssuer,
+            @Value("${order.security.audience:order-api}") String expectedAudience) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+        OAuth2TokenValidator<Jwt> withIssuerAndAudience = new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefault(),
+                new JwtIssuerValidator(expectedIssuer),
+                new JwtClaimValidator<List<String>>(JwtClaimNames.AUD,
+                        aud -> aud != null && aud.contains(expectedAudience)));
+        decoder.setJwtValidator(withIssuerAndAudience);
+        return decoder;
     }
 }

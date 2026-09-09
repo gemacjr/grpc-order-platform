@@ -55,6 +55,10 @@ order:
     # certificates. The gRPC service still re-validates any token it does see;
     # this flag only controls whether validation is enforced at all.
     enabled: ${ORDER_SECURITY_ENABLED:false}
+    # Expected `iss`/`aud` claims. Defaults match JwtTestTokens so the test suite
+    # keeps passing unchanged; override for real deployments.
+    issuer: ${ORDER_SECURITY_ISSUER:https://dev.example.com}
+    audience: ${ORDER_SECURITY_AUDIENCE:order-api}
 
 management:
   server:

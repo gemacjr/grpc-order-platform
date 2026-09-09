@@ -78,6 +78,24 @@ class AuthInterceptorIT {
     }
 
     @Test
+    void callWithWrongIssuerIsUnauthenticated() {
+        var token = JwtTestTokens.signedToken("user-1", List.of("orders:write", "orders:read"),
+                "https://attacker.example.com", "order-api");
+        var thrown = catchThrowableOfType(() -> stubWith(token).createOrder(request()),
+                StatusRuntimeException.class);
+        assertThat(thrown.getStatus().getCode()).isEqualTo(Status.Code.UNAUTHENTICATED);
+    }
+
+    @Test
+    void callWithWrongAudienceIsUnauthenticated() {
+        var token = JwtTestTokens.signedToken("user-1", List.of("orders:write", "orders:read"),
+                "https://dev.example.com", "some-other-api");
+        var thrown = catchThrowableOfType(() -> stubWith(token).createOrder(request()),
+                StatusRuntimeException.class);
+        assertThat(thrown.getStatus().getCode()).isEqualTo(Status.Code.UNAUTHENTICATED);
+    }
+
+    @Test
     void healthChecksAreExemptFromAuth() {
         var response = io.grpc.health.v1.HealthGrpc.newBlockingStub(channel)
                 .check(io.grpc.health.v1.HealthCheckRequest.newBuilder().build());

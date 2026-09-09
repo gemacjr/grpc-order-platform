@@ -4,7 +4,10 @@ import io.grpc.*;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -49,8 +52,7 @@ public class AuthInterceptor implements ServerInterceptor {
 
         try {
             var jwt = decoder.decode(header.substring("Bearer ".length()));
-            List<String> scopes = List.of(
-                    String.valueOf(jwt.getClaims().getOrDefault("scope", "")).split(" "));
+            List<String> scopes = List.copyOf(parseScopes(jwt.getClaims()));
 
             String required = WRITE_METHODS.contains(descriptor.getBareMethodName())
                     ? "orders:write" : "orders:read";
@@ -68,6 +70,42 @@ public class AuthInterceptor implements ServerInterceptor {
             // of their forged token to fix.
             return close(call, Status.UNAUTHENTICATED.withDescription("Invalid token"));
         }
+    }
+
+    /**
+     * Parses the {@code scope} claim (falling back to {@code scp}, as used by
+     * Azure AD/Okta) defensively: a {@link Collection} claim has its elements mapped
+     * to strings, a {@link String} claim is split on spaces and commas, and a
+     * missing/null/unrecognized claim yields an empty set - so this always fails
+     * closed (deny) rather than throwing or silently granting scopes.
+     */
+    static Set<String> parseScopes(Map<String, Object> claims) {
+        Object claim = claims.get("scope");
+        if (claim == null) {
+            claim = claims.get("scp");
+        }
+        if (claim == null) {
+            return Set.of();
+        }
+        if (claim instanceof Collection<?> collection) {
+            Set<String> result = new java.util.LinkedHashSet<>();
+            for (Object element : collection) {
+                if (element != null) {
+                    result.add(String.valueOf(element));
+                }
+            }
+            return result;
+        }
+        if (claim instanceof String value) {
+            List<String> tokens = new ArrayList<>();
+            for (String token : value.split("[ ,]+")) {
+                if (!token.isBlank()) {
+                    tokens.add(token);
+                }
+            }
+            return Set.copyOf(tokens);
+        }
+        return Set.of();
     }
 
     private <ReqT, RespT> ServerCall.Listener<ReqT> close(ServerCall<ReqT, RespT> call, Status status) {
