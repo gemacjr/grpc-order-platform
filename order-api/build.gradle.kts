@@ -20,7 +20,9 @@ dependencies {
     implementation("com.google.api.grpc:proto-google-common-protos")
 
     testImplementation(project(":testing-support"))
+    testImplementation(project(":order-service"))
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-webflux-test")
+    testImplementation("org.springframework.boot:spring-boot-webtestclient")
     testImplementation("io.projectreactor:reactor-test")
 }
