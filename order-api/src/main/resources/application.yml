@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: order-api
+
+  grpc:
+    client:
+      channels:
+        order-service:
+          address: static://localhost:9443
+          negotiation-type: plaintext   # replaced with TLS in Task 17
+
+server:
+  port: 8080
+
+order:
+  client:
+    read-deadline: 2s
+    write-deadline: 5s
+
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

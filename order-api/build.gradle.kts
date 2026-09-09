@@ -4,14 +4,21 @@ plugins {
     alias(libs.plugins.spring.dependency.management)
 }
 
-dependencies {
-    implementation(platform(libs.spring.grpc.bom))
-    implementation("org.springframework.boot:spring-boot-starter")
+dependencyManagement {
+    imports {
+        mavenBom(libs.spring.grpc.bom.get().toString())
+        mavenBom(libs.testcontainers.bom.get().toString())
+    }
 }
 
-// TODO(task-10): remove once OrderApiApplication exists. Task 10 replaces this
-// file wholesale; the replacement must NOT carry this over, or Task 18's
-// `:order-api:bootJar` silently produces no jar and the Docker build fails.
-tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
-    enabled = false
+dependencies {
+    implementation(project(":proto"))
+    implementation(libs.spring.grpc.client)
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("com.google.api.grpc:proto-google-common-protos")
+
+    testImplementation(project(":testing-support"))
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.projectreactor:reactor-test")
 }
