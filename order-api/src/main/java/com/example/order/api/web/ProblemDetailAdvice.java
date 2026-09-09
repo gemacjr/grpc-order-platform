@@ -66,6 +66,19 @@ public class ProblemDetailAdvice {
                 "The order service did not respond within the deadline.", "timeout");
     }
 
+    @ExceptionHandler(RemoteUnauthenticated.class)
+    public ProblemDetail unauthenticated(RemoteUnauthenticated e) {
+        // Generic detail: never echo upstream detail about why a token failed.
+        return problem(HttpStatus.UNAUTHORIZED, "Unauthenticated",
+                "Authentication is required or the supplied credentials are invalid.", "unauthenticated");
+    }
+
+    @ExceptionHandler(RemotePermissionDenied.class)
+    public ProblemDetail permissionDenied(RemotePermissionDenied e) {
+        return problem(HttpStatus.FORBIDDEN, "Permission denied",
+                "The supplied credentials do not permit this operation.", "permission-denied");
+    }
+
     @ExceptionHandler(RemoteInternal.class)
     public ProblemDetail internal(RemoteInternal e) {
         // The upstream message may contain internal detail; only the correlation id escapes.

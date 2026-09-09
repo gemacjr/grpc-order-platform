@@ -91,7 +91,6 @@ its `@RestControllerAdvice` re-maps it to an RFC 9457 `ProblemDetail`:
 |---|---|---|
 | `NOT_FOUND` | 404 | |
 | `INVALID_ARGUMENT` | 400 | `errors[]` populated from `FieldViolation` |
-| `ALREADY_EXISTS` | 409 | |
 | `FAILED_PRECONDITION` | 409 | Illegal status transition |
 | `ABORTED` | 409 | Optimistic-lock version conflict; caller should re-read and retry |
 | `DEADLINE_EXCEEDED` | 504 | |
@@ -99,6 +98,11 @@ its `@RestControllerAdvice` re-maps it to an RFC 9457 `ProblemDetail`:
 | `PERMISSION_DENIED` | 403 | |
 | `UNAUTHENTICATED` | 401 | |
 | everything else | 500 | Opaque body, error id echoed for correlation |
+
+Note: `order-service` never emits `ALREADY_EXISTS` — a duplicate
+idempotency key resolves into a replay of the original order (see
+`POST /api/v1/orders` above), not an error, so that gRPC status has no
+corresponding row here.
 
 ## Exploring with `grpcurl`
 

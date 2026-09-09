@@ -30,6 +30,8 @@ public final class GrpcStatusTranslator {
             case ABORTED -> new RemoteVersionConflict(message);
             case UNAVAILABLE -> new RemoteUnavailable(message, sre);
             case DEADLINE_EXCEEDED -> new RemoteTimeout(message, sre);
+            case UNAUTHENTICATED -> new RemoteUnauthenticated(message);
+            case PERMISSION_DENIED -> new RemotePermissionDenied(message);
             default -> new RemoteInternal(message, errorId(rpcStatus), sre);
         };
     }

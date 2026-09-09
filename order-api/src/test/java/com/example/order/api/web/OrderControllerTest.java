@@ -118,6 +118,24 @@ class OrderControllerTest {
     }
 
     @Test
+    void unauthenticatedBecomes401() {
+        when(client.get(any())).thenReturn(Mono.error(new RemoteUnauthenticated("missing token")));
+        web.get().uri("/api/v1/orders/" + UUID.randomUUID()).exchange()
+                .expectStatus().isUnauthorized()
+                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody().jsonPath("$.title").isEqualTo("Unauthenticated");
+    }
+
+    @Test
+    void permissionDeniedBecomes403() {
+        when(client.get(any())).thenReturn(Mono.error(new RemotePermissionDenied("missing scope")));
+        web.get().uri("/api/v1/orders/" + UUID.randomUUID()).exchange()
+                .expectStatus().isForbidden()
+                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody().jsonPath("$.title").isEqualTo("Permission denied");
+    }
+
+    @Test
     void unknownStatusFilterReturns400NotServerError() {
         web.get().uri("/api/v1/orders?status=bogus").exchange()
                 .expectStatus().isBadRequest()

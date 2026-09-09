@@ -110,6 +110,11 @@ resilience4j:
           - com.example.order.api.client.exception.RemoteValidationFailed
           - com.example.order.api.client.exception.RemoteIllegalTransition
           - com.example.order.api.client.exception.RemoteVersionConflict
+          # An auth failure means the backend is healthy and correctly refusing
+          # the caller; counting it as a backend failure would let a burst of
+          # bad tokens open the breaker and take down a working service.
+          - com.example.order.api.client.exception.RemoteUnauthenticated
+          - com.example.order.api.client.exception.RemotePermissionDenied
   bulkhead:
     instances:
       order-service:

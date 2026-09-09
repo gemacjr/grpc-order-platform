@@ -10,7 +10,10 @@ spec:
     metadata:
       labels: { app: order-api }
     spec:
-      terminationGracePeriodSeconds: 30
+      # Must exceed Boot's default 30s graceful-shutdown phase timeout
+      # (server.shutdown: graceful) so jitter doesn't get the pod SIGKILLed
+      # mid-drain, matching the margin order-service keeps for its own budget.
+      terminationGracePeriodSeconds: 45
       containers:
         - name: order-api
           image: order-api:latest
