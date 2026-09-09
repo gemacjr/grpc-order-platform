@@ -1,6 +1,8 @@
 spring:
   application:
     name: order-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   threads:
     virtual:
       enabled: true
@@ -11,6 +13,17 @@ spring:
     server:
       port: 9443
       host: 0.0.0.0
+      shutdown-grace-period: 30s
+      keep-alive:
+        time: 30s
+        timeout: 10s
+        # Without this an idle client's pings are treated as abuse and the
+        # connection is killed - the classic "works until traffic goes quiet" bug.
+        permit-without-calls: true
+        max-idle: 5m
+
+server:
+  shutdown: graceful
 
 management:
   server:

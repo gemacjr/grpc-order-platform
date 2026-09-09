@@ -8,6 +8,13 @@ spring:
         order-service:
           address: static://localhost:9443
           negotiation-type: plaintext   # replaced with TLS in Task 17
+          health:
+            enabled: true
+            service-name: order.v1.OrderService
+          enable-keep-alive: true
+          keep-alive-time: 30s
+          keep-alive-timeout: 10s
+          keep-alive-without-calls: true
 
 server:
   port: 8080
