@@ -107,8 +107,16 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
             var batch = publisher.poll(cursor, customerId, STREAM_BATCH);
             for (var event : batch) {
                 // Honour reactive-style backpressure: pause while the transport
-                // buffer is full instead of piling messages into memory.
+                // buffer is full instead of piling messages into memory. The deadline
+                // check bounds this only when the caller set one; a caller with no
+                // deadline gets no bound from it, which is why the cancellation check
+                // remains as the other exit.
                 while (!serverObserver.isReady() && !serverObserver.isCancelled()) {
+                    var readyWaitDeadline = context.getDeadline();
+                    if (readyWaitDeadline != null
+                            && (readyWaitDeadline.isExpired() || withinSafetyMargin(readyWaitDeadline))) {
+                        return;
+                    }
                     if (!sleepQuietly(DEADLINE_CHECK_INTERVAL_MS)) {
                         return;
                     }
@@ -140,7 +148,14 @@ public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
                 }
             }
         }
-        observer.onCompleted();
+        // Completing an already-cancelled call throws, and cancellation means the
+        // client is gone anyway, so there is nothing left to complete. The loop can
+        // exit via the top-of-loop condition (client cancelled between the last
+        // onNext and the next iteration's check) as well as via the explicit
+        // deadline break, so both paths need this guard.
+        if (!context.isCancelled() && !serverObserver.isCancelled()) {
+            observer.onCompleted();
+        }
     }
 
     private boolean withinSafetyMargin(io.grpc.Deadline deadline) {
