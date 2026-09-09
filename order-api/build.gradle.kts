@@ -20,6 +20,13 @@ dependencies {
     implementation("com.google.api.grpc:proto-google-common-protos")
     implementation(libs.resilience4j)
     implementation(libs.resilience4j.reactor)
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation(libs.micrometer.tracing.otel)
+    implementation(libs.otel.exporter.otlp)
+    // See order-service/build.gradle.kts for why this is required in addition to
+    // the bridge artifact.
+    implementation("org.springframework.boot:spring-boot-micrometer-tracing-opentelemetry")
+    runtimeOnly(libs.logstash.encoder)
     // NOTE: spring-boot-starter-aop is not published for Spring Boot 4.0.8 (absent from
     // spring-boot-dependencies-4.0.8's BOM; Central has no such artifact past 4.0.0-M2).
     // It is not needed here anyway: ResilientOrderClient wires CircuitBreakerOperator /

@@ -20,6 +20,16 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation(libs.micrometer.tracing.otel)
+    implementation(libs.otel.exporter.otlp)
+    // Boot's BOM manages micrometer-tracing-bridge-otel but the tracing
+    // autoconfiguration itself (Tracer/Propagator beans, OTLP span exporter wiring)
+    // lives in this separate module and is not pulled in transitively - without it
+    // no Tracer bean exists and traceparent is never propagated. Not in the brief;
+    // added because the bridge alone left TracePropagationIT failing.
+    implementation("org.springframework.boot:spring-boot-micrometer-tracing-opentelemetry")
+    runtimeOnly(libs.logstash.encoder)
     runtimeOnly(libs.flyway.postgres)
     runtimeOnly("org.postgresql:postgresql")
 
