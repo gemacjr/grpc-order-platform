@@ -9,6 +9,18 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  # PEM bundle backing the gRPC server's TLS credentials. Spring Boot's
+  # PropertiesSslBundleRegistrar resolves the certificate/private-key files lazily -
+  # only when a consumer actually asks the registry for this bundle by name - so
+  # this definition is inert (and requires no files on disk) whenever
+  # spring.grpc.server.ssl.enabled is false, which is the default.
+  ssl:
+    bundle:
+      pem:
+        grpc-server:
+          keystore:
+            certificate: ${GRPC_TLS_CERT:file:certs/server.crt}
+            private-key: ${GRPC_TLS_KEY:file:certs/server.key}
   grpc:
     server:
       port: 9443
@@ -21,6 +33,13 @@ spring:
         # connection is killed - the classic "works until traffic goes quiet" bug.
         permit-without-calls: true
         max-idle: 5m
+      # GrpcServerProperties.Ssl (spring-grpc-server-spring-boot-autoconfigure 1.0.3)
+      # exposes only enabled/clientAuth/bundle/secure - no certificate/private-key
+      # fields - so TLS material must be wired through a named spring.ssl.bundle.*
+      # bundle referenced here, not supplied inline.
+      ssl:
+        enabled: ${GRPC_TLS_ENABLED:false}
+        bundle: grpc-server
 
 server:
   shutdown: graceful
@@ -31,6 +50,11 @@ order:
     # drains. Overridden to 0s in tests so the suite isn't taxed on every
     # Spring context teardown.
     pre-drain-wait: 2s
+  security:
+    # Off by default so tests and local runs work without a JWKS endpoint or
+    # certificates. The gRPC service still re-validates any token it does see;
+    # this flag only controls whether validation is enforced at all.
+    enabled: ${ORDER_SECURITY_ENABLED:false}
 
 management:
   server:

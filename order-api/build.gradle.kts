@@ -15,6 +15,8 @@ dependencies {
     implementation(project(":proto"))
     implementation(libs.spring.grpc.client)
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+    implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.google.api.grpc:proto-google-common-protos")

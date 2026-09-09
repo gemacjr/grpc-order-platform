@@ -32,6 +32,16 @@ public class ResilientOrderClient {
         this.bulkhead = bulkhead;
     }
 
+    /**
+     * Returns a resilient view whose calls carry the given bearer token, still
+     * wrapped by the SAME breaker and bulkhead instances as this client - a
+     * per-request breaker would never accumulate enough calls to open, silently
+     * disabling the feature.
+     */
+    public ResilientOrderClient withToken(String token) {
+        return new ResilientOrderClient(delegate.withToken(token), breaker, bulkhead);
+    }
+
     public Mono<CreateOrderResponse> create(String customerId, List<OrderLine> lines,
                                             String currency, String idempotencyKey) {
         return guard(delegate.create(customerId, lines, currency, idempotencyKey));

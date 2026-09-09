@@ -19,4 +19,8 @@ dependencies {
     api(libs.grpc.testing)
     api("org.springframework:spring-test")
     api("org.springframework:spring-context")
+    // Not present in spring-boot-dependencies' own BOM (it arrives transitively only
+    // through spring-security-oauth2-jose, which this module does not depend on), so
+    // it is genuinely absent from managed dependencies here and must be pinned.
+    api("com.nimbusds:nimbus-jose-jwt:9.48")
 }

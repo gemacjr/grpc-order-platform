@@ -4,8 +4,11 @@ import com.example.order.api.client.ResilientOrderClient;
 import com.example.order.api.dto.DtoMapper;
 import com.example.order.api.dto.OrderEventDto;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/v1/orders/events")
@@ -25,6 +28,17 @@ public class OrderEventSseController {
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<OrderEventDto> stream(@RequestParam(required = false) String customerId,
                                       @RequestParam(defaultValue = "0") long fromSequence) {
-        return client.streamEvents(customerId, fromSequence).map(DtoMapper::toDto);
+        return authorizedClient()
+                .flatMapMany(c -> c.streamEvents(customerId, fromSequence))
+                .map(DtoMapper::toDto);
+    }
+
+    private Mono<ResilientOrderClient> authorizedClient() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(context -> context.getAuthentication())
+                .filter(JwtAuthenticationToken.class::isInstance)
+                .cast(JwtAuthenticationToken.class)
+                .map(auth -> client.withToken(auth.getToken().getTokenValue()))
+                .defaultIfEmpty(client);
     }
 }

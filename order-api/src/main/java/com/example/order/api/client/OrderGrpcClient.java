@@ -28,6 +28,16 @@ public class OrderGrpcClient {
         this.writeDeadline = writeDeadline;
     }
 
+    /**
+     * Returns a client whose stub carries the given bearer token, propagated to the
+     * gRPC service by {@link AuthPropagatingInterceptor}. The gRPC service still
+     * re-validates the token itself; this only carries it across the wire.
+     */
+    public OrderGrpcClient withToken(String token) {
+        return new OrderGrpcClient(stub.withOption(AuthPropagatingInterceptor.BEARER_TOKEN, token),
+                readDeadline, writeDeadline);
+    }
+
     public Mono<CreateOrderResponse> create(String customerId, List<OrderLine> lines,
                                             String currency, String idempotencyKey) {
         return write().createOrder(CreateOrderRequest.newBuilder()

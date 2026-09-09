@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":proto"))
     implementation(libs.spring.grpc.server)
     implementation(libs.grpc.services)
+    implementation("org.springframework.security:spring-security-oauth2-jose")
     implementation("com.google.api.grpc:proto-google-common-protos")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-actuator")

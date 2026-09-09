@@ -2,12 +2,29 @@ spring:
   application:
     name: order-api
 
+  # Truststore for verifying the gRPC server's certificate. Resolved lazily by
+  # Spring Boot's SSL bundle registry only when the bundle is actually requested
+  # (i.e. when spring.grpc.client.channels.order-service.ssl.enabled is true), so
+  # this is inert - and requires no file on disk - while TLS is off (the default).
+  ssl:
+    bundle:
+      pem:
+        grpc-client:
+          truststore:
+            certificate: ${GRPC_TRUST_STORE:file:certs/ca.crt}
+
   grpc:
     client:
       channels:
         order-service:
           address: static://localhost:9443
-          negotiation-type: plaintext   # replaced with TLS in Task 17
+          negotiation-type: ${GRPC_NEGOTIATION:plaintext}
+          # GrpcClientProperties.ChannelConfig.Ssl (spring-grpc-client-spring-boot-
+          # autoconfigure 1.0.3) exposes only enabled/bundle - no trust-store field -
+          # so, as on the server, TLS material is wired through a named bundle.
+          ssl:
+            enabled: ${GRPC_TLS_ENABLED:false}
+            bundle: grpc-client
           health:
             enabled: true
             service-name: order.v1.OrderService
@@ -23,6 +40,11 @@ order:
   client:
     read-deadline: 2s
     write-deadline: 5s
+  security:
+    # Off by default so tests and local runs work without a JWKS endpoint; the
+    # compose stack turns it on explicitly. See order-service's flag of the same
+    # name - the gRPC service re-validates independently either way.
+    enabled: ${ORDER_SECURITY_ENABLED:false}
 
 management:
   server:

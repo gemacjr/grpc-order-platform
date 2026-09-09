@@ -1,5 +1,6 @@
 package com.example.order.api.config;
 
+import com.example.order.api.client.AuthPropagatingInterceptor;
 import com.example.order.api.client.OrderGrpcClient;
 import com.example.order.proto.ReactorOrderServiceGrpc;
 import io.grpc.ManagedChannel;
@@ -7,6 +8,7 @@ import io.grpc.ManagedChannelBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.grpc.client.GlobalClientInterceptor;
 import org.springframework.grpc.client.GrpcChannelBuilderCustomizer;
 import org.springframework.grpc.client.GrpcChannelFactory;
 
@@ -42,6 +44,15 @@ public class GrpcClientConfig {
         builder.defaultServiceConfig(RetryPolicyConfig.serviceConfig())
                 .enableRetry()
                 .maxRetryAttempts(4);
+    }
+
+    // Copies the caller's bearer token (when present) into gRPC metadata so the
+    // downstream service can re-validate it. Global rather than per-channel: harmless
+    // when no token is set, since AuthPropagatingInterceptor.BEARER_TOKEN defaults to null.
+    @Bean
+    @GlobalClientInterceptor
+    public AuthPropagatingInterceptor authPropagatingInterceptor() {
+        return new AuthPropagatingInterceptor();
     }
 
     @Bean
