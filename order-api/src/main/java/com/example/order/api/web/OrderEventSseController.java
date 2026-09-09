@@ -1,6 +1,6 @@
 package com.example.order.api.web;
 
-import com.example.order.api.client.OrderGrpcClient;
+import com.example.order.api.client.ResilientOrderClient;
 import com.example.order.api.dto.DtoMapper;
 import com.example.order.api.dto.OrderEventDto;
 import org.springframework.http.MediaType;
@@ -11,9 +11,9 @@ import reactor.core.publisher.Flux;
 @RequestMapping("/api/v1/orders/events")
 public class OrderEventSseController {
 
-    private final OrderGrpcClient client;
+    private final ResilientOrderClient client;
 
-    public OrderEventSseController(OrderGrpcClient client) {
+    public OrderEventSseController(ResilientOrderClient client) {
         this.client = client;
     }
 

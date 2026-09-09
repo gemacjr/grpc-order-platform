@@ -1,6 +1,6 @@
 package com.example.order.api.web;
 
-import com.example.order.api.client.OrderGrpcClient;
+import com.example.order.api.client.ResilientOrderClient;
 import com.example.order.api.client.exception.*;
 import com.example.order.proto.CreateOrderResponse;
 import com.example.order.proto.Order;
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 class OrderControllerTest {
 
     @Autowired WebTestClient web;
-    @MockitoBean OrderGrpcClient client;
+    @MockitoBean ResilientOrderClient client;
 
     private static final String BODY = """
             {"customerId":"c1","currency":"USD","idempotencyKey":"k1",

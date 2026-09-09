@@ -18,6 +18,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.google.api.grpc:proto-google-common-protos")
+    implementation(libs.resilience4j)
+    implementation(libs.resilience4j.reactor)
+    // NOTE: spring-boot-starter-aop is not published for Spring Boot 4.0.8 (absent from
+    // spring-boot-dependencies-4.0.8's BOM; Central has no such artifact past 4.0.0-M2).
+    // It is not needed here anyway: ResilientOrderClient wires CircuitBreakerOperator /
+    // BulkheadOperator programmatically rather than via @CircuitBreaker/@Bulkhead
+    // annotations, so no AOP proxying is required. Deviation from the brief, documented
+    // in task-14-report.md.
 
     testImplementation(project(":testing-support"))
     testImplementation(project(":order-service"))

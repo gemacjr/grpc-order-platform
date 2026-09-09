@@ -1,6 +1,6 @@
 package com.example.order.api.web;
 
-import com.example.order.api.client.OrderGrpcClient;
+import com.example.order.api.client.ResilientOrderClient;
 import com.example.order.api.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +14,9 @@ import java.util.UUID;
 @RequestMapping("/api/v1/orders")
 public class OrderController {
 
-    private final OrderGrpcClient client;
+    private final ResilientOrderClient client;
 
-    public OrderController(OrderGrpcClient client) {
+    public OrderController(ResilientOrderClient client) {
         this.client = client;
     }
 
