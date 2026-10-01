@@ -44,3 +44,25 @@ bin/
 
 ### Dev certificates (generated, never commit) ###
 certs/
+# Added before first GitHub push
+node_modules/
+.next/
+dist/
+target/
+target.nosync/
+.gradle/
+.terraform/
+*.tfstate
+*.tfstate.*
+.env
+.env.*
+!.env.example
+.idea/
+.remember/
+.superpowers/
+.worktrees/
+.playwright-mcp/
+.venv/
+graphify-out/
+Pods/
+*.log
